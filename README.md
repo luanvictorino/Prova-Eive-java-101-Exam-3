@@ -279,6 +279,10 @@ public Lista<Carro> findAll(){
          .getResultList(); 
   } 
 ```
+  * No lugar de "Lista" seria "List".
+  * No select da consulta, no lugar de * deve ser informado o alias da tabela (P).
+  * Se usarmos o parâmetro "?" na consulta, devemos indicar qual parâmetro ele se refere, exemplo: "?1".
+  * No setParameter da forma como está irá funcionar, mas não é recomendado passar fixo como está no código, e sim o parâmetro que será passado na chamada do método.
 
 15) Qual a função do `mappedBy` e onde ele deve ser usado?
   * É Usado para indicar que se trata de um relacionamento bidirecional.
@@ -498,9 +502,106 @@ Derived Query permite fazer consultas no banco sem utilizar comandos sql.
   * `@SpringBootApplication`: Contém as anotações @Configuration, @EnableAutoConfiguration e @ComponentScan.
 
 25) Escreva uma classe que contenha um método REST que retorna uma lista fixa de Carros, utilize o padrão DTO.
+  ```Java
+  //Imports
+    @RestController
+    @RequestMapping("/carros")
+    public class CarroController {
+      
+      @getMapping
+      public List<CarroDto> getLista() {
+        List<CarroDto> carros = new ArrayList<CarroDto>();
+        Carro saveiro = new Carro("volksWagen", "caminhonete", "AVA5747");
+        carros.add(saveiro);
+        Carro fusca = new Carro("volksWagen", "convensional", "BTO8972");
+        carros.add(fusca);
+        
+        return carros;
+      }
+    }
+  ```
+
 26) Adapte seu código da atividade anterior para um modelo que usa o padrão `Repository` e retorne uma lista de Carros. 
+  ```Java
+  //Imports
+    @RestController
+    @RequestMapping("/carros")
+    public class CarroController {
+
+      @Autowired
+      private CarroRepository carroRepository;
+
+      @GetMapping
+      public List<CarroDto> getLista() {
+        List<Carro> carros = carroRepository.findAll();
+        return CarroDto.converter(carros);
+      }
+    }
+  ```
+
 27) Qual a finalidade do `Bean Validation`, Explique e de um exemplo do seu uso em código com a annotation `@Valid`
   * A finalidade do Bean Validation é uma especificação do java para tratar validações de dados de classes da camada de modelo.
+
+  ```Java
+  //Imports
+    public class CarroForm {
+      @NotNull @NotEmpty @Length(min = 5)
+      private String nome;
+      @NotNull @NotEmpty @Length(min = 5)
+      private String modelo;
+      @NotNull @NotEmpty @Length(min = 8)
+      private String placa;
+
+      public String getNome(){
+        return nome;
+      }
+
+      public void SetNome(String nome){
+        this.nome = nome;
+      }
+
+      public String getModelo(){
+        return modelo;
+      }
+
+      public void SetModelo(String modelo){
+        this.modelo = modelo;
+      }
+
+      public String getPlaca(){
+        return placa;
+      }
+
+      public void SetPlaca(String placa){
+        this.placa = placa;
+      }
+
+      public Carro converter(CarroRepository carroRepository){
+        return new Carro(this.marca, this.modelo, this.placa);
+      }
+    }
+  ```
+
+  ```Java
+  //Imports
+    @RestController
+    @RequestMapping("/carros")
+    public class CarroController {
+  
+      @Autowired
+      private CarroRepository carroRepository;
+    
+      @PostMapping
+      public ResponseEntity<CarroDto> cadastrar(@RequestBody @Valid CarroForm form, UriComponentsBuilder uriBuilder{
+        Carro carro = carroForm.converter(carroRepository);
+        carroRepository.save(carro);
+      
+        URI uri = uriBuilder.path("/topicos/{id}").buildAndExpand(topico.getId()).toUri();
+        return ResponseEntity.created(uri).body(new CarroDto(carro));
+      }
+
+}
+  ```
 
 28) Explique para que é usado a annotation `@ExceotionHandler` e de um exemplo de método que utiliza ela.
   * Essa annotation serve para informar que o método que a usa será executado quando essa exceção for lançada. 
